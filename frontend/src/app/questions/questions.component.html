@@ -1,0 +1,44 @@
+<div class="container mx-auto px-5 mt-16 max-w-[913px]">
+  <div class="flex justify-between items-center">
+    <h2 class="text-2xl font-semibold">All Questions</h2>
+    <form class="relative flex items-center gap-1.5">
+      <input
+        id="searchInput"
+        class="py-2.5 pl-10 pr-2 rounded-lg border border-zinc-300 focus:outline-none"
+        type="text"
+        placeholder="Search..."
+        aria-label="Search"
+        [formControl]="searchInput"
+      />
+      <img
+        loading="lazy"
+        src="https://cdn-icons-png.flaticon.com/512/149/149852.png"
+        class="absolute left-3 top-1/2 transform -translate-y-1/2 w-6 h-6"
+        alt="Search icon"
+      />
+    </form>
+    <button
+      [routerLink]="'/createPost'"
+      class="px-4 py-2.5 text-sm font-bold leading-5 text-white bg-gradient-to-r from-pink-600 to-pink-500 rounded-lg"
+    >
+      Create Question
+    </button>
+  </div>
+  <hr class="my-8 border border-solid border-neutral-600" />
+
+  <!-- Sample Article (Repeat structure for each article) -->
+  <ul>
+    <li
+      *ngFor="let question of questions"
+      class="mb-12 cursor-pointer"
+      (click)="navigateToQuestion(question._id)"
+    >
+      <h3 class="text-2xl font-semibold">{{ question.title }}</h3>
+      <div class="flex items-center mt-4 text-gray-600">
+        <p class="mr-4">By: {{ question.user.username }}</p>
+        <time>{{ getRelativeTime(question.createdAt) }}</time>
+      </div>
+    </li>
+  </ul>
+  <hr class="my-8 border border-solid border-neutral-600" />
+</div>

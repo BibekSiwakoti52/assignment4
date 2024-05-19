@@ -1,0 +1,68 @@
+<section class="mt-10 mx-auto flex flex-col px-5 max-w-[713px]">
+  <header class="w-full text-xl text-black max-md:max-w-full mb-8">
+    {{ question.title }}
+  </header>
+  <article
+    class="w-full text-lg font-medium leading-7 text-zinc-800 max-md:max-w-full"
+  >
+    <p class="mb-6">{{ question.body }}</p>
+  </article>
+
+  <button
+    (click)="showAnswerForm = !showAnswerForm"
+    class="mb-5 px-4 py-2.5 text-sm font-bold leading-5 text-white bg-gradient-to-r from-pink-600 to-pink-500 rounded-lg"
+  >
+    {{ showAnswerForm ? "Cancel" : "Post Answer" }}
+  </button>
+  <form *ngIf="showAnswerForm" action="" [formGroup]="answerForm">
+    <textarea
+      id="questionBody"
+      class="w-full px-4 py-3 leading-6 text-sm text-gray-800 placeholder-gray-400 border border-solid border-gray-300 rounded-lg focus:outline-none focus:border-primary-500"
+      rows="6"
+      placeholder="Please provide your answer to this question"
+      [formControl]="newAnswer"
+    ></textarea>
+    <button
+      (click)="postAnswer(question._id)"
+      class="mb-5 px-4 py-2.5 text-sm font-bold leading-5 text-white bg-gradient-to-r from-pink-600 to-pink-500 rounded-lg"
+    >
+      Post
+    </button>
+  </form>
+</section>
+
+<section class="mx-auto flex flex-col px-5 text-black max-w-[712px] mt-10">
+  <h2 class="text-lg mb-5">Answers</h2>
+  <div
+    *ngFor="let answer of answers"
+    class="mb-4 flex gap-5 justify-between w-full max-md:flex-wrap max-md:pr-5 max-md:max-w-full bg-gray-100 p-4 rounded-lg"
+  >
+    <div class="flex flex-col font-medium">
+      <div class="flex gap-3 mt-7 items-center">
+        <img
+          loading="lazy"
+          (click)="upvoteOrDownvote(answer._id, 'upvote')"
+          src="https://cdn.builder.io/api/v1/image/assets/TEMP/d4e1ef2eea3eb065f8dc588748177ffb6a30dfa37ad5cb33fff3505338f9710c?apiKey=e4810918eb19489ab4e376f0aa64de89&"
+          class="rounded-full aspect-square bg-stone-300 h-[31px] w-[31px]"
+          alt=""
+        />
+        <p>{{ answer.upvotes }}</p>
+        <img
+          loading="lazy"
+          src="https://cdn.builder.io/api/v1/image/assets/TEMP/95cdffea8d1970a16fbd40f0fd430001c1ef8e47848e94740551d0e50f473056?apiKey=e4810918eb19489ab4e376f0aa64de89&"
+          class="rounded-full aspect-square bg-stone-300 h-[31px] w-[31px]"
+          alt=""
+          (click)="upvoteOrDownvote(answer._id, 'downvote')"
+        />
+        <p class="text-lg">{{ answer.answer }}</p>
+      </div>
+    </div>
+    <aside class="flex flex-col self-end mt-10">
+      <button class="text-sm font-light leading-5 underline">Comment</button>
+      <time class="mt-16 text-xs font-medium max-md:mt-10"
+        >Answered by Bibek on May 11, 2024</time
+      >
+    </aside>
+  </div>
+  <!-- Repeat the above article structure for other answers -->
+</section>

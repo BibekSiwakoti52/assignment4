@@ -1,0 +1,32 @@
+<nav class="bg-teal-950 py-4 sticky top-0 z-50">
+  <div class="container mx-auto flex justify-end items-center">
+    <!-- Navigation Links -->
+    <div class="flex space-x-4">
+      <a
+        routerLink="/questions"
+        class="text-white hover:text-teal-400 rounded-full px-3 py-1 transition duration-300 ease-in-out transform hover:scale-110 border-b-2 border-transparent hover:border-teal-400"
+        >Questions</a
+      >
+      <a
+        routerLink="/createPost"
+        class="text-white hover:text-teal-400 rounded-full px-3 py-1 transition duration-300 ease-in-out transform hover:scale-110 border-b-2 border-transparent hover:border-teal-400"
+        >Ask Question</a
+      >
+      <a
+        routerLink="/login"
+        class="text-white hover:text-teal-400 rounded-full px-3 py-1 transition duration-300 ease-in-out transform hover:scale-110 border-b-2 border-transparent hover:border-teal-400"
+        >Login</a
+      >
+      <a
+        routerLink="/signup"
+        class="text-white hover:text-teal-400 rounded-full px-3 py-1 transition duration-300 ease-in-out transform hover:scale-110 border-b-2 border-transparent hover:border-teal-400"
+        >Sign Up</a
+      >
+      <a
+        (click)="logout()"
+        class="text-white hover:text-teal-400 rounded-full px-3 py-1 transition duration-300 ease-in-out transform hover:scale-110 border-b-2 border-transparent hover:border-teal-400"
+        >Log Out</a
+      >
+    </div>
+  </div>
+</nav>
