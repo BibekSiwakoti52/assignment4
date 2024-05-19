@@ -22,74 +22,82 @@ export class QuestionComponent {
     this.router = router;
   }
 
-  questionId: string = '';
-  question: any;
-  answers: any;
+ // Variables to store question and answers
+ questionId: string = '';
+ question: any;
+ answers: any;
 
-  showAnswerForm = false;
+ showAnswerForm = false; // Flag to show/hide answer form
 
-  newAnswer = new FormControl('');
+ // FormControl for new answer input
+ newAnswer = new FormControl('');
 
-  answerForm = new FormGroup({
-    newAnswer: this.newAnswer,
-  });
+ // FormGroup for the answer form
+ answerForm = new FormGroup({
+   newAnswer: this.newAnswer,
+ });
 
-  postAnswer(id: string) {
-    this.http
-      .post(`${API_URL}/answer?questionId=${id}`, {
-        answer: this.newAnswer.value,
-      })
-      .subscribe(
-        () => {
-          this.getQuestionAnswers(id);
-          this.showAnswerForm = false;
-          this.newAnswer.setValue('');
-        },
-        (err) => {
-          alert(err.error.message);
-        }
-      );
-  }
+ // Method to post an answer
+ postAnswer(id: string) {
+   this.http
+     .post(`${API_URL}/answer?questionId=${id}`, {
+       answer: this.newAnswer.value,
+     })
+     .subscribe(
+       () => {
+         this.getQuestionAnswers(id); // Refresh answers after posting
+         this.showAnswerForm = false; // Hide answer form
+         this.newAnswer.setValue(''); // Clear new answer input
+       },
+       (err) => {
+         alert(err.error.message); // Show error alert if post fails
+       }
+     );
+ }
 
-  getQuestionDetails(id: string) {
-    return this.http
-      .get(`${API_URL}/question/${id}`)
-      .subscribe((response: any) => {
-        if (response) {
-          this.question = response.data;
-        }
-      });
-  }
+ // Method to fetch question details
+ getQuestionDetails(id: string) {
+   return this.http
+     .get(`${API_URL}/question/${id}`)
+     .subscribe((response: any) => {
+       if (response) {
+         this.question = response.data;
+       }
+     });
+ }
 
-  getQuestionAnswers(id: string) {
-    return this.http
-      .get(`${API_URL}/answer`, {
-        params: {
-          questionId: id,
-        },
-      })
-      .subscribe((response: any) => {
-        if (response) {
-          this.answers = response.data;
-        }
-      });
-  }
+ // Method to fetch answers for a question
+ getQuestionAnswers(id: string) {
+   return this.http
+     .get(`${API_URL}/answer`, {
+       params: {
+         questionId: id,
+       },
+     })
+     .subscribe((response: any) => {
+       if (response) {
+         this.answers = response.data;
+       }
+     });
+ }
 
-  upvoteOrDownvote(id: string, action: string) {
-    this.http
-      .post(`${API_URL}/answer/upvote/${id}`, {
-        action,
-      })
-      .subscribe(() => {
-        this.getQuestionAnswers(this.questionId);
-      });
-  }
+ // Method to upvote or downvote an answer
+ upvoteOrDownvote(id: string, action: string) {
+   this.http
+     .post(`${API_URL}/answer/upvote/${id}`, {
+       action,
+     })
+     .subscribe(() => {
+       this.getQuestionAnswers(this.questionId); // Refresh answers after voting
+     });
+ }
 
-  ngOnInit(): void {
-    this.route.params.subscribe((params) => {
-      this.questionId = params['id'];
-      this.getQuestionDetails(this.questionId);
-      this.getQuestionAnswers(this.questionId);
-    });
-  }
+ // Lifecycle hook - executed when component is initialized
+ ngOnInit(): void {
+   this.route.params.subscribe((params) => {
+     this.questionId = params['id']; // Get question ID from route parameters
+     this.getQuestionDetails(this.questionId); // Fetch question details
+     this.getQuestionAnswers(this.questionId); // Fetch answers for the question
+   });
+ }
 }

@@ -13,34 +13,39 @@ import { API_URL } from '../../constants';
   templateUrl: './questions.component.html',
 })
 export class QuestionsComponent {
-  questions: any = [];
+  questions: any = []; // Array to store fetched questions
 
-  searchInput = new FormControl('');
+  searchInput = new FormControl(''); // FormControl for search input
 
   constructor(private http: HttpClient, private router: Router) {
     this.http = http;
     this.router = router;
+    
+    // Fetch initial list of questions (empty query)
     this.getQuestions({ q: '' }).subscribe((response: any) => {
-      this.questions = response.data; // Adjust based on your API response
+      this.questions = response.data; // Assign fetched questions to the array
     });
   }
 
+  // Method to navigate to a specific question
   navigateToQuestion(questionId: number): void {
     this.router.navigate(['/question', questionId]);
   }
 
   ngOnInit(): void {
+    // Subscribe to changes in the search input
     this.searchInput.valueChanges
       .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        switchMap((query) => this.getQuestions({ q: query || '' }))
+        debounceTime(300), // Debounce user input for 300 milliseconds
+        distinctUntilChanged(), // Only emit distinct values
+        switchMap((query) => this.getQuestions({ q: query || '' })) // Switch to new observable based on search query
       )
       .subscribe((response: any) => {
-        this.questions = response.data;
+        this.questions = response.data; // Update questions array with filtered questions
       });
   }
 
+  // Method to convert a date string to relative time
   getRelativeTime(date: string) {
     const now = new Date();
     const inputDate = new Date(date);
@@ -74,9 +79,10 @@ export class QuestionsComponent {
     return seconds === 1 ? '1 second ago' : `${seconds} seconds ago`;
   }
 
+  // Method to fetch questions from the API
   getQuestions({ q }: { q: string }) {
     return this.http.get(`${API_URL}/question`, {
-      params: { q },
+      params: { q }, // Pass search query as a parameter
     });
   }
 }
