@@ -1,6 +1,13 @@
-// Function to create a new answer to a question
+const { ROLES } = require('../constants');
+const mongoose = require('mongoose');
+const Answer = require('../models/Answer');
+const AnswerUpvote = require('../models/AnswerUpvote');
+const { catchAsync, AppError } = require('../utils');
+const AnswerComment = require('../models/Comment');
+const Question = require('../models/Question');
+
+// Function to create an answer to a question
 const createAnswer = catchAsync(async (req, res, next) => {
-  // Extracting user ID and question ID from request
   const userId = req.user.id;
   const { questionId } = req.query;
 
@@ -9,44 +16,42 @@ const createAnswer = catchAsync(async (req, res, next) => {
     throw new AppError('Only experts can answer questions', 401);
   }
 
-  // Creating a new answer document
+  // Create an answer and mark the question as answered
   const answer = await Answer.create({
     ...req.body,
     user: userId,
     question: questionId,
   });
 
-  // Marking the question as answered
   await Question.findByIdAndUpdate(questionId, {
     isAnswered: true,
   });
 
-  // Sending response
   return res.status(200).json({
     message: 'Answer created successfully',
     data: answer,
   });
 });
 
-// Function to retrieve answers for a specific question
+// Function to get answers for a specific question
 const getAnswers = catchAsync(async (req, res, next) => {
-  // Extracting question ID from request
   const questionId = req.query.questionId;
 
-  // Checking if question ID is provided
+  // Validate if questionId is provided
   if (!questionId) {
     throw new AppError('questionId is required', 400);
   }
 
-  // Querying answers for the specified question, sorting by upvotes
-  const answers = await Answer.find({ question: questionId })
+  // Retrieve answers for the given question, sorted by upvotes
+  const answersQuery = Answer.find({ question: questionId })
     .populate({
       path: 'user',
       select: 'username',
     })
     .sort({ upvotes: -1 });
 
-  // Sending response
+  const answers = await answersQuery;
+
   return res.status(200).json({
     data: answers,
   });
@@ -54,14 +59,11 @@ const getAnswers = catchAsync(async (req, res, next) => {
 
 // Function to upvote or downvote an answer
 const upvoteOrDownvoteAnswer = catchAsync(async (req, res) => {
-  // Extracting answer ID and user ID from request
   const answerId = req.params.id;
   const userId = req.user.id;
 
-  // Extracting action from request body
   const action = req.body.action;
-  
-  // Validating action
+  // Validate action
   if (action !== 'upvote' && action !== 'downvote') {
     const error = new AppError(
       'Invalid action. Please specify upvote or downvote',
@@ -70,15 +72,18 @@ const upvoteOrDownvoteAnswer = catchAsync(async (req, res) => {
     throw error;
   }
 
-  // Checking if the user has already upvoted/downvoted the answer
+  // Check if the user has already upvoted/downvoted the answer
   const upvote = await AnswerUpvote.findOne({
     user: userId,
     answer: answerId,
   });
 
-  // Performing upvote or downvote based on action
+  // Perform upvote or downvote based on action
+  // Also, handle transactions to maintain data consistency
+  // Ensure the user hasn't already liked/unliked the post
   const session = await mongoose.startSession();
   await session.withTransaction(async () => {
+    // Update answer upvotes count
     const answer = await Answer.findByIdAndUpdate(
       answerId,
       {
@@ -90,15 +95,23 @@ const upvoteOrDownvoteAnswer = catchAsync(async (req, res) => {
       throw new AppError('Answer not found', 404);
     }
 
-    // Creating or deleting upvote document
+    // Create or delete upvote based on action
     if (action === 'upvote') {
       await AnswerUpvote.create(
-        [{ user: userId, answer: answerId }],
+        [
+          {
+            user: userId,
+            answer: answerId,
+          },
+        ],
         { session }
       );
     } else if (action === 'downvote') {
       const answerUpvote = await AnswerUpvote.findOneAndDelete(
-        { user: userId, answer: answerId },
+        {
+          user: userId,
+          answer: answerId,
+        },
         { session }
       );
       if (!answerUpvote) {
@@ -109,19 +122,17 @@ const upvoteOrDownvoteAnswer = catchAsync(async (req, res) => {
 
   session.endSession();
 
-  // Sending response
   return res.status(200).json({
     message: `Answer ${action}d successfully`,
   });
 });
 
-// Function to approve an answer
+// Function to approve an answer by the question owner
 const approveAnswer = catchAsync(async (req, res, next) => {
-  // Extracting answer ID and user ID from request
   const { id } = req.params;
   const userId = req.user.id;
 
-  // Checking if the user is authorized to approve the answer
+  // Find the answer and its associated question
   const answer = await Answer.findById(id).populate({
     path: 'question',
     populate: {
@@ -134,57 +145,53 @@ const approveAnswer = catchAsync(async (req, res, next) => {
     throw new AppError('Answer not found', 404);
   }
 
-  // Checking if the answer is already approved
+  // Check if the answer is already approved
   if (answer.isApproved) {
     throw new AppError('Answer is already approved', 400);
   }
 
   const question = answer.question;
 
+  // Check if the current user is the owner of the question
   if (userId !== question.user._id.toString()) {
     throw new AppError('You are not authorized to approve this answer', 401);
   }
 
-  // Approving the answer
+  // Approve the answer
   answer.isApproved = true;
   await answer.save();
 
-  // Sending response
   return res.status(200).json({ message: 'Answer successfully approved' });
 });
 
 // Function to create a comment on an answer
 const createAnswerComment = catchAsync(async (req, res, next) => {
-  // Extracting user ID and answer ID from request
   const userId = req.user.id;
   const { id } = req.params;
 
-  // Creating a new comment document
+  // Create a comment on the answer
   const comment = await AnswerComment.create({
     ...req.body,
     user: userId,
     answer: id,
   });
 
-  // Sending response
   return res.status(200).json({
     message: 'Comment created successfully',
     data: comment,
   });
 });
 
-// Function to retrieve comments for a specific answer
+// Function to get comments for an answer
 const getAnswerComments = catchAsync(async (req, res, next) => {
-  // Extracting answer ID from request
   const { id } = req.params;
 
-  // Querying comments for the specified answer
+  // Retrieve comments for the given answer
   const comments = await AnswerComment.find({ answer: id }).populate({
     path: 'user',
     select: 'username',
   });
 
-  // Sending response
   return res.status(200).json({
     data: comments,
   });
@@ -198,3 +205,4 @@ module.exports = {
   createAnswerComment,
   getAnswerComments,
 };
+
